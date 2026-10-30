@@ -63,7 +63,7 @@ void printFile(bool is_file, bool is_last, int depth, const char *name, int *exh
     printf("%s%s %s %s\n", depth_string, marker, icon, name);
   }
 }
-void printTree(const char *parent_dir, const char *name, int depth, bool is_last, int *exhaustedDepths, const char *icon, int maxDepth, bool dirsOnly){
+void printTree(const char *parent_dir, const char *name, int depth, bool is_last, int *exhaustedDepths, int maxDepth, bool dirsOnly){
   char dir[PATH_MAX];
   strcpy(dir, parent_dir);
   strcat(dir, "/");
@@ -78,7 +78,7 @@ void printTree(const char *parent_dir, const char *name, int depth, bool is_last
 
   for (int i = 0; i < n; i++){
     if ( list[i]->d_type == DT_DIR){
-      if (depth < maxDepth) { printTree(dir, list[i]->d_name, depth+1, (i == n-1), exhaustedDepths, "", maxDepth, dirsOnly); }
+      if (depth < maxDepth) { printTree(dir, list[i]->d_name, depth+1, (i == n-1), exhaustedDepths, maxDepth, dirsOnly); }
     }
     else if (dirsOnly) { }
     else if (list[i]->d_type == DT_REG){
@@ -101,7 +101,7 @@ void combine(int len_dirs, char *dirs[], int maxDepth, bool dirsOnly) {
     }
     printf("\033[33m \033[0m%s:\n", full_path);
     int exhaustedDepths[99];
-    printTree("", full_path, 0, false, exhaustedDepths, "", maxDepth, dirsOnly);
+    printTree("", full_path, 0, false, exhaustedDepths, maxDepth, dirsOnly);
     printf("\n");
   }
 }
