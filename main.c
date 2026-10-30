@@ -1,20 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-
-
+#include <string.h>
 #include "shree.h"
 
-
-// Input can have any no. of directories, all of them can be tree'd one after another
 int main(int argc, char *argv[]) {
-  if (argc == 1) { // 'shree' functionally equivalent to 'shree .'
-    char *cwd[] =  {"filler", "."};
-    combine(2, cwd);
-  }
-  else {
-    combine(argc, argv);
-  }
+  
+  int numDirs = 0;
+  char *dirs[argc];
+  int maxDepth = 99;
+  bool dirsOnly = false;
+
+  parseInput(argc, argv, dirs, &numDirs, &dirsOnly, &maxDepth);
+  combine(numDirs, dirs, maxDepth, dirsOnly);
   exit(0);
 }
-

@@ -3,9 +3,26 @@
 #include <dirent.h>
 #include <limits.h> //library for getting min and max values in a datatype; used for realpath()
 #include <string.h>
+#include <stdbool.h>
 
-void printUsage(){
+void printUsage(){ //unused
   printf("Usage: shree [OPTIONS] [DIRECTORIES]\n");
+}
+
+void parseInput(int argc, char **argv, char **dirs, int *numDirs, bool *dirsOnly, int *maxDepth){
+  for (int i = 1; i < argc; i++){
+    if (strcmp(argv[i], "--depth") == 0) { *maxDepth = atoi(argv[i+1]); i++; }
+    else if (strcmp(argv[i], "-d") == 0) { *dirsOnly = true;}
+    else {
+      dirs[*numDirs] = argv[i];
+      (*numDirs)++;
+    }
+  }
+
+  if (*numDirs == 0){ //If no directories specified, tree CWD
+    dirs[*numDirs] = ".";
+    (*numDirs)++;
+  }
 }
 
 int getFullPath(const char *relative_path, char *full_path){
@@ -22,7 +39,6 @@ int hiddenFilesFilter(const struct dirent *entry){
 }
 
 void printFile(bool is_file, bool is_last, int depth, const char *name, int *exhaustedDepths, const char *icon){
- 
   const char *marker = "├───";
   if (is_last){
     marker = "└───";
@@ -47,7 +63,7 @@ void printFile(bool is_file, bool is_last, int depth, const char *name, int *exh
     printf("%s%s %s %s\n", depth_string, marker, icon, name);
   }
 }
-void printTree(const char *parent_dir, const char *name, int depth, bool is_last, int *exhaustedDepths, const char *icon){
+void printTree(const char *parent_dir, const char *name, int depth, bool is_last, int *exhaustedDepths, const char *icon, int maxDepth, bool dirsOnly){
   char dir[PATH_MAX];
   strcpy(dir, parent_dir);
   strcat(dir, "/");
@@ -62,24 +78,22 @@ void printTree(const char *parent_dir, const char *name, int depth, bool is_last
 
   for (int i = 0; i < n; i++){
     if ( list[i]->d_type == DT_DIR){
-      printTree(dir, list[i]->d_name, depth+1, (i == n-1), exhaustedDepths, "");
+      if (depth < maxDepth) { printTree(dir, list[i]->d_name, depth+1, (i == n-1), exhaustedDepths, "", maxDepth, dirsOnly); }
     }
+    else if (dirsOnly) { }
     else if (list[i]->d_type == DT_REG){
       printFile(true, (i == n-1), depth+1, list[i]->d_name, exhaustedDepths, "\033[37m\033[0m");
     }
     else if (list[i]->d_type == DT_LNK){
       printFile(true, (i == n-1), depth+1, list[i]->d_name, exhaustedDepths, "\033[36m\033[0m");
     }
-    else{
-      perror("error\n");
-    }
     free(list[i]);
   }
 free(list);
 }
 
-void combine(int len_dirs, char *dirs[]) {
-  for (int i = 1; i < len_dirs; i++){
+void combine(int len_dirs, char *dirs[], int maxDepth, bool dirsOnly) {
+  for (int i = 0; i < len_dirs; i++){
     char full_path[PATH_MAX];
     if (!getFullPath(dirs[i], full_path)){
       perror(dirs[i]);
@@ -87,12 +101,9 @@ void combine(int len_dirs, char *dirs[]) {
     }
     printf("\033[33m \033[0m%s:\n", full_path);
     int exhaustedDepths[99];
-    printTree("", full_path, 0, false, exhaustedDepths, "");
+    printTree("", full_path, 0, false, exhaustedDepths, "", maxDepth, dirsOnly);
     printf("\n");
   }
 }
 
-//to implement:
-//-d (directories only)
-//--depth n
-
+// to do: fix wrong marker bug
